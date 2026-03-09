@@ -336,7 +336,7 @@ elif signal["buy"]:
 else:
     signal_kind = "NONE"
     signal_key = ""
-    alert_text = "Sin senal activa"
+    alert_text = "Sin señal activa"
     alert_class = "neutral"
 
 if signal_kind != "NONE" and signal_key not in st.session_state.alert_seen:
