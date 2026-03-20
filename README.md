@@ -6,9 +6,10 @@ Bot de analisis tecnico y simulacion para `BTC/EUR` con:
 - indicadores tecnicos
 - prediccion Monte Carlo a 30 dias
 - backtesting de 1 ano
-- interfaz web con Streamlit
+- interfaz web con Flask
 - integracion opcional de noticias via CryptoPanic o NewsAPI
 - traduccion de titulares al espanol
+- despliegue compatible con Vercel
 
 ## Requisitos
 
@@ -27,17 +28,17 @@ python3 -m venv .venv
 
 ## Ejecucion
 
-### Interfaz web
+### Interfaz web local
 
 ```bash
 cd /home/sm-des/Predict
-.venv/bin/streamlit run app.py
+.venv/bin/flask --app app run
 ```
 
 Luego abre en el navegador:
 
 ```text
-http://localhost:8501
+http://127.0.0.1:5000
 ```
 
 ### Modo terminal
@@ -112,7 +113,7 @@ Al ejecutar el analisis se generan:
 
 ## Estructura del proyecto
 
-- `app.py`: interfaz web Streamlit
+- `app.py`: interfaz web Flask
 - `predict.py`: entrada principal del flujo
 - `config.py`: configuracion general
 - `data_loader.py`: carga de datos desde Binance
@@ -132,7 +133,7 @@ Instaladas desde `requirements.txt`:
 - `plotly`
 - `requests`
 - `pandas_ta`
-- `streamlit`
+- `flask`
 - `deep-translator`
 
 ## Notas
@@ -140,3 +141,22 @@ Instaladas desde `requirements.txt`:
 - El backtest actual usa `1 ano`
 - El historico de precios consulta hasta `5 anos`
 - Si cambias reglas de senales o stops, debes volver a ejecutar el analisis
+- En Vercel, los archivos exportados se escriben en `/tmp` por restricciones del entorno serverless
+
+## Deploy en Vercel
+
+El proyecto incluye [vercel.json](/home/sm-des/Predict/vercel.json) para desplegar la app Flask sin cambiar la logica cuantitativa.
+
+Pasos:
+
+1. sube este repo a GitHub
+2. importa el repo en Vercel
+3. Vercel detectara el runtime Python por `vercel.json`
+4. si necesitas claves por defecto, configurarlas como variables de entorno en Vercel
+
+Variables utiles:
+
+- `BINANCE_API_KEY`
+- `BINANCE_API_SECRET`
+- `CRYPTOPANIC_API_KEY`
+- `NEWSAPI_API_KEY`

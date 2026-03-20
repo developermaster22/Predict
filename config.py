@@ -22,7 +22,7 @@ TAKE_PROFIT_PCT = 0.15
 TRAILING_STOP_PCT = 0.08
 COOLDOWN_DAYS = 3
 
-OUTPUT_DIR = Path(".")
+OUTPUT_DIR = Path("/tmp") if os.getenv("VERCEL") else Path(".")
 OPERATIONS_CSV = OUTPUT_DIR / "btc_eur_operaciones.csv"
 NEWS_CSV = OUTPUT_DIR / "btc_eur_noticias.csv"
 EQUITY_CSV = OUTPUT_DIR / "btc_eur_equity_curve.csv"

@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BTC/EUR Quant Bot</title>
+  <style>
+    :root {
+      --bg: #0a0d14;
+      --panel: #111827;
+      --panel-2: #182235;
+      --line: #24324a;
+      --text: #edf2f7;
+      --muted: #99a8bf;
+      --accent: #ffb703;
+      --accent-2: #219ebc;
+      --good: #22c55e;
+      --bad: #ef4444;
+      --warn: #f59e0b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(circle at top, #172033 0%, var(--bg) 45%);
+      color: var(--text);
+      font-family: "Segoe UI", sans-serif;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      min-height: 100vh;
+    }
+    .sidebar {
+      border-right: 1px solid var(--line);
+      background: rgba(17, 24, 39, 0.92);
+      padding: 24px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: auto;
+    }
+    .content {
+      padding: 28px;
+    }
+    h1, h2, h3 { margin-top: 0; }
+    .caption, .muted { color: var(--muted); }
+    .notice, .error, .empty {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 18px;
+      background: var(--panel-2);
+    }
+    .error { border-color: rgba(239, 68, 68, 0.4); color: #fecaca; }
+    .notice { border-color: rgba(245, 158, 11, 0.4); color: #fde68a; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin: 18px 0 24px;
+    }
+    .card {
+      background: rgba(17, 24, 39, 0.84);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+    }
+    .metric-label {
+      color: var(--muted);
+      font-size: 0.88rem;
+      margin-bottom: 8px;
+    }
+    .metric-value {
+      font-size: 1.7rem;
+      font-weight: 700;
+    }
+    .section {
+      margin-bottom: 26px;
+      background: rgba(17, 24, 39, 0.7);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 20px;
+    }
+    label {
+      display: block;
+      margin: 0 0 8px;
+      font-weight: 600;
+    }
+    input, select, button {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #0f172a;
+      color: var(--text);
+      padding: 12px 14px;
+      margin-bottom: 14px;
+    }
+    button {
+      background: linear-gradient(135deg, var(--accent), #fb8500);
+      color: #0b111d;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+    }
+    .data-table th, .data-table td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+    .data-table th {
+      position: sticky;
+      top: 0;
+      background: #101827;
+    }
+    .table-wrap {
+      overflow: auto;
+      max-height: 420px;
+    }
+    .kv-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .kv-item {
+      background: #0f172a;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 14px;
+    }
+    .kv-key {
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin-bottom: 4px;
+    }
+    .kv-val {
+      font-weight: 700;
+    }
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { position: static; height: auto; }
+      .content { padding: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <h1>BTC/EUR Quant Bot</h1>
+      <p class="caption">Interfaz web compatible con Vercel. La lógica cuantitativa del proyecto se mantiene en los módulos Python.</p>
+      <div class="notice">{{ news_notice }}</div>
+      <form method="post">
+        <label for="symbol">Par a analizar</label>
+        <input id="symbol" name="symbol" value="{{ form_data.symbol }}">
+
+        <label for="api_key">Binance API Key</label>
+        <input id="api_key" name="api_key" type="password" value="">
+
+        <label for="api_secret">Binance API Secret</label>
+        <input id="api_secret" name="api_secret" type="password" value="">
+
+        <label for="initial_capital">Capital inicial (EUR)</label>
+        <input id="initial_capital" name="initial_capital" type="text" inputmode="decimal" placeholder="10000 o 10000,00" value="{{ form_data.initial_capital }}">
+
+        <label for="risk_per_trade_pct">Porcentaje de capital por operación</label>
+        <input id="risk_per_trade_pct" name="risk_per_trade_pct" type="text" inputmode="decimal" placeholder="10 o 10,5" value="{{ form_data.risk_per_trade_pct }}">
+
+        <label for="news_provider">Proveedor de noticias</label>
+        <select id="news_provider" name="news_provider">
+          {% for option in ["none", "cryptopanic", "newsapi"] %}
+          <option value="{{ option }}" {% if form_data.news_provider == option %}selected{% endif %}>{{ option }}</option>
+          {% endfor %}
+        </select>
+
+        <label for="news_api_key">API Key noticias</label>
+        <input id="news_api_key" name="news_api_key" type="password" value="">
+
+        <button type="submit">Ejecutar análisis</button>
+      </form>
+    </aside>
+
+    <main class="content">
+      {% if error_message %}
+      <div class="error">{{ error_message }}</div>
+      {% endif %}
+
+      {% if not results %}
+      <div class="empty">Completa el formulario y ejecuta el análisis.</div>
+      {% else %}
+      <section class="grid">
+        <div class="card">
+          <div class="metric-label">Precio actual</div>
+          <div class="metric-value">{{ results.latest_price }} EUR</div>
+        </div>
+        <div class="card">
+          <div class="metric-label">Capital final</div>
+          <div class="metric-value">{{ "%.2f"|format(results.summary.capital_final) }} EUR</div>
+          <div class="caption">{{ "%.2f"|format(results.summary.ganancia_total_pct) }}%</div>
+        </div>
+        <div class="card">
+          <div class="metric-label">Operaciones</div>
+          <div class="metric-value">{{ results.summary.operaciones_totales|int }}</div>
+        </div>
+        <div class="card">
+          <div class="metric-label">Win rate</div>
+          <div class="metric-value">{{ "%.2f"|format(results.summary.win_rate) }}%</div>
+        </div>
+      </section>
+
+      <section class="grid">
+        <div class="card">
+          <div class="metric-label">Profit factor</div>
+          <div class="metric-value">{{ "%.2f"|format(results.summary.profit_factor) }}</div>
+        </div>
+        <div class="card">
+          <div class="metric-label">Max drawdown</div>
+          <div class="metric-value">{{ "%.2f"|format(results.summary.max_drawdown_pct) }}%</div>
+        </div>
+        <div class="card">
+          <div class="metric-label">Monte Carlo media final</div>
+          <div class="metric-value">{{ "%.2f"|format(results.forecast.expected_final_mean) }} EUR</div>
+        </div>
+        <div class="card">
+          <div class="metric-label">Prob. cierre > actual</div>
+          <div class="metric-value">{{ "%.2f"|format(results.forecast.prob_final_above_last * 100) }}%</div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Gráfico</h2>
+        {{ results.chart_html | safe }}
+      </section>
+
+      <section class="section">
+        <h2>Resumen técnico</h2>
+        <div class="kv-grid">
+          {% for key, value in results.technical.items() %}
+          <div class="kv-item">
+            <div class="kv-key">{{ key }}</div>
+            <div class="kv-val">{{ value }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Operaciones simuladas</h2>
+        {% if results.trades_table %}
+        <div class="table-wrap">{{ results.trades_table | safe }}</div>
+        {% else %}
+        <div class="empty">No se generaron operaciones con los parámetros actuales.</div>
+        {% endif %}
+      </section>
+
+      <section class="section">
+        <h2>Equity curve</h2>
+        <div class="table-wrap">{{ results.equity_table | safe }}</div>
+      </section>
+
+      <section class="section">
+        <h2>Noticias</h2>
+        {% if results.news_error %}
+        <div class="notice">{{ results.news_error }}</div>
+        {% endif %}
+        {% if results.news_table %}
+        <div class="table-wrap">{{ results.news_table | safe }}</div>
+        {% else %}
+        <div class="empty">No se cargaron noticias para esta ejecución.</div>
+        {% endif %}
+      </section>
+      {% endif %}
+    </main>
+  </div>
+</body>
+</html>

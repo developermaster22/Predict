@@ -4,5 +4,5 @@ numpy
 plotly
 requests
 pandas_ta
-streamlit
+flask
 deep-translator
