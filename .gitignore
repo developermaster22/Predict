@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Archivos generados por el bot
+btc_eur_trading_system.html
+btc_eur_operaciones.csv
+btc_eur_equity_curve.csv
+btc_eur_noticias.csv

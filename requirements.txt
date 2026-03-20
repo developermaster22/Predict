@@ -1,0 +1,8 @@
+python-binance
+pandas
+numpy
+plotly
+requests
+pandas_ta
+streamlit
+deep-translator
